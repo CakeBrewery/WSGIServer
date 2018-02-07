@@ -5,18 +5,23 @@ import signal
 # Predefine signal handlers for program scope
 # TODO: Figure out where to put these
 
+# The idea is to have each fork be a "worker", the same way gunicorn does it.
+
 
 def _sigchld(signum, stack):
-    print('TEST')
+    # SIGCHLD indicates that a worker has stopped.
+    # We must do this to avoid Zombie processes
     while True:
         try:
             # WNOHANG makes this non-blocking
             pid, status = os.waitpid(-1, os.WNOHANG)
-        except OSError:
+        except OSError as e:
+            if e.errno != errno.ECHILD:
+                raise
             return
 
-        if pid == 0:
-            return
+        if not pid:
+            break
 
 
 _HANDLERS = {
