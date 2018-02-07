@@ -1,10 +1,14 @@
 from __future__ import unicode_literals
 
 import datetime
+import errno
 import logging
+import os
 from six import StringIO 
 import socket
 import sys
+
+import handlers
 
 
 logging.getLogger().setLevel(logging.getLevelName('INFO'))
@@ -24,7 +28,7 @@ def _configured_socket():
     _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     return _socket
 
-
+   
 class WSGIServer(object):
 
     def __init__(self, server_address, application):
@@ -45,12 +49,39 @@ class WSGIServer(object):
 
         self.application = application
 
+    def _fork_and_handle(self):
+        # Simple half-assed implementation for supporting
+        # multiple connections at the same time.
+        pid = os.fork()
+        
+        # Upon fork, 0 is returned onto child process
+        # pid of child is returned to parent process.
+        if pid == 0:
+            self.socket.close()  # Decrement socket file descriptor references
+            self.handle_request()
+            os._exit(0)
+        else:
+            self.client_connection.close()
+    
+    def _next_connection(self):
+        self.client_connection, client_address = self.socket.accept()
+        return client_address
+
     def start(self):
         while True:
-            self.client_connection, client_address = self.socket.accept()
-            self.handle_request()
+            try:
+                if self._next_connection():
+                    self._fork_and_handle()
+            except IOError as e:
+                code, msg = e.args
+
+                if code == errno.EINTR:
+                    continue
+                else:
+                    raise
 
     def handle_request(self):
+        print('Handling request')
         self.request_data = self.client_connection.recv(1024)
 
         logging.info('### REQUEST ###:\n')
@@ -124,6 +155,8 @@ if __name__ == '__main__':
     host, port = DEFAULT_HOST, DEFAULT_PORT  # Todo: Allow more options.
 
     application = getattr(module, app_name)
+
+    handlers.initialize_handlers()
 
     server = WSGIServer((host, port), application)
     logging.info('WSGI Server: Serving from {}:{}\n'.format(host, port))
