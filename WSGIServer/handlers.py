@@ -1,5 +1,6 @@
 import os
 import signal
+import errno
 
 
 # Predefine signal handlers for program scope
