@@ -15,7 +15,7 @@ logging.getLogger().setLevel(logging.getLevelName('INFO'))
 
 
 DEFAULT_HOST = '0.0.0.0'
-DEFAULT_PORT = 8080
+DEFAULT_PORT = 8888
 
 
 def httpdate(dt):
@@ -81,7 +81,6 @@ class WSGIServer(object):
                     raise
 
     def handle_request(self):
-        print('Handling request')
         self.request_data = self.client_connection.recv(1024)
 
         logging.info('### REQUEST ###:\n')
@@ -131,13 +130,15 @@ class WSGIServer(object):
         self.headers_set = [status, response_headers + server_headers]
 
     def make_response(self, result):
+        body = ''.join(chunk for chunk in result)
+        
         status, response_headers = self.headers_set
         response = 'HTTP/1.1 {status}\r\n'.format(status=status)
 
         for header in response_headers:
             response += '{0}: {1}\r\n'.format(*header)
         response += '\r\n'
-        response += ''.join(result)
+        response += ''.join(body)
 
         return response
 
