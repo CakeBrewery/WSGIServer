@@ -68,11 +68,11 @@ class WSGIServer(object):
             os._exit(0)
         else:
             self.client_connection.close()
-    """
     
     def _next_connection(self):
         self.client_connection, client_address = self.socket.accept()
         return client_address
+    """
 
     def prefork(self):
         num_workers = 1 
@@ -88,7 +88,7 @@ class WSGIServer(object):
     def start(self):
         while True:
             self.prefork()
-
+    """
     def handle_request(self):
         self.request_data = self.client_connection.recv(1024)
 
@@ -150,7 +150,7 @@ class WSGIServer(object):
         response += ''.join(body)
 
         return response
-
+    """
 
 if __name__ == '__main__':
     module, app_name = sys.argv[1].split(':')

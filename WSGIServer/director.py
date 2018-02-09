@@ -27,6 +27,10 @@ class Director(object):
     def close_sockets(self):
         for _socket in self.sockets:
             _socket.close()
+
+    def stop_workers(self):
+        for worker in self._workers.values():
+            worker.stop()
                      
     def hire(self, worker_cls):
         """
@@ -38,7 +42,7 @@ class Director(object):
             worker = worker_cls(self.cfg)
             if worker and worker.id():
                 self._workers[pid] = worker
-                worker.start()
+                worker.start(sockets)
                 return pid
 
     def fire(self, worker_id, force=False):
@@ -59,4 +63,5 @@ class Director(object):
 
     def __del__(self):
         self.close_sockets()
+        self.stop_workers()
         super(Director, self).__del__()
