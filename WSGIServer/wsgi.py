@@ -19,9 +19,9 @@ class Response(object):
 
     def start_response(self, status, response_headers, exc_info=None):
         # This is a WSGI-defined callback (Check PEP333 for details)
-        server_headers = [('Date', httpdate(datetime.datetime.now()))), ('Server', 'WSGIServer 0.2')]
+        server_headers = [('Date', httpdate(datetime.datetime.now())), ('Server', 'WSGIServer 0.2')]
         self.status = status
-        self.headers = self.headers.update(response_headers
+        self.headers = self.headers.update(response_headers)
         self.ready = True
 
     def serialize(body):
@@ -42,8 +42,9 @@ class AppRunner(object):
     """
     In charge of running the app object of the given framework.
     """
-    def __init__(self, client_connection, cfg = None):
+    def __init__(self, application, client_connection, cfg=None):
         self.cfg = cfg or {}
+        self.application = application
         self.connection = client_connection
 
     def handle_request(self):

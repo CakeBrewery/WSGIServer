@@ -14,10 +14,9 @@ def _configured_socket():
 
 
 class Director(object):
-
-    def __init__(self, cfg=None)
+    def __init__(self, cfg=None):
         self._workers = {}
-        self.cfg = default_config.update(cfg)
+        self.cfg = default_cfg.update(cfg or {})
         self.sockets = []
        
     def initialize_sockets(self):
@@ -57,11 +56,10 @@ class Director(object):
             os.kill(pid, signal.SIGINT if force else signal.SIGTERM)
             del self._workers[worker_id]
 
-    @attribute
-    def workers():
+    @property
+    def workers(self):
         return self._workers.values()        
 
     def __del__(self):
         self.close_sockets()
         self.stop_workers()
-        super(Director, self).__del__()
