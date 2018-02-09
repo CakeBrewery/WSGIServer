@@ -19,8 +19,10 @@ from lexceptions import CannotKeepUp
 logging.getLogger().setLevel(logging.getLevelName('INFO'))
 
 
-DEFAULT_HOST = '0.0.0.0'
-DEFAULT_PORT = 8888
+DEFAULT_HOST = 'localhost'
+DEFAULT_PORT = 8881
+
+DEFAULT_CFG = {}
 
 
 def httpdate(dt):
@@ -37,22 +39,8 @@ def _configured_socket():
 class WSGIServer(object):
 
     def __init__(self, server_address, application):
-        self.director = Director()
-        self.socket = _configured_socket()
-
-        self.socket.bind(server_address)
-        self.socket.listen(1)
-
-        host, port = self.socket.getsockname()[:2]
-        self.server_name = socket.getfqdn(host)
-        self.server_port = port
-
-        # As per the wsgi documentation. 
-        # This is used as an object variable to store
-        # state of the current processing request.
-        # Check the examples on PEP 333
-        self.headers_set = []
-
+        self.cfg = DEFAULT_CFG.update({'SERVER_ADDRESS': server_address})
+        self.director = Director(self.cfg)
         self.application = application
 
     def prefork(self):
@@ -70,6 +58,7 @@ class WSGIServer(object):
         while True:
             self.prefork()
 
+
 if __name__ == '__main__':
     module, app_name = sys.argv[1].split(':')
     if not module:
@@ -80,13 +69,11 @@ if __name__ == '__main__':
     if not app_name or not hasattr(module, app_name):
         sys.exit('Could not find application object "{}" in module {}.'.format(app_name, module))
 
-    host, port = DEFAULT_HOST, DEFAULT_PORT  # Todo: Allow more options.
-
     application = getattr(module, app_name)
 
     handlers.initialize_handlers()
 
-    server = WSGIServer((host, port), application)
-    logging.info('WSGI Server: Serving from {}:{}\n'.format(host, port))
+    server = WSGIServer(('localhost', 8881), application)
+    logging.info('WSGI Server: Serving from {}:{}\n'.format(DEFAULT_HOST, DEFAULT_PORT))
     server.start()
 

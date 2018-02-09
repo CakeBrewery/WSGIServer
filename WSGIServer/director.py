@@ -1,9 +1,10 @@
 import os
 import signal
+import socket
 
 
 default_cfg = {
-    'SOCKET_COUNT': 1 
+    'SOCKET_COUNT': 1,
 }
 
 
@@ -14,14 +15,34 @@ def _configured_socket():
 
 
 class Director(object):
+    REQUIRED_CFG_FIELDS = ['SERVER_ADDRESS', 'SOCKET_COUNT']
+
     def __init__(self, cfg=None):
-        self._workers = {}
-        self.cfg = default_cfg.update(cfg or {})
         self.sockets = []
+        self._workers = {}
+
+        self.cfg = default_cfg
+        self.cfg.update(cfg or {})
+
+        self.initialize_sockets()
        
+    def cfg_errors(self):
+        errors = []
+        for item in self.REQUIRED_CFG_FIELDS:
+            if item not in self.cfg.keys():
+                errors.append('Missing "{}".'.format(item))
+        return errors
+
     def initialize_sockets(self):
-        while len(sockets) < self.cfg.get['SOCKET_COUNT']:
-            self.sockets.append(_configured_socket())
+        cfg_errors = self.cfg_errors()
+        if cfg_errors:
+            raise ValueError('Configuration errors:\n{}'.format('\n'.join(cfg_errors)))
+
+        while len(self.sockets) < self.cfg['SOCKET_COUNT']:
+            _socket = _configured_socket()
+            _socket.bind(self.cfg['SERVER_ADDRESS'])
+            _socket.listen(1)
+            self.sockets.append(_socket)
 
     def close_sockets(self):
         for _socket in self.sockets:
@@ -39,9 +60,10 @@ class Director(object):
 
         if pid != 0:
             worker = worker_cls(self.cfg)
-            if worker and worker.id():
+            if worker:
                 self._workers[pid] = worker
-                worker.start(sockets)
+                raise NotImplementedError(self.sockets)
+                worker.start(self.sockets)
                 return pid
 
     def fire(self, worker_id, force=False):
@@ -63,3 +85,4 @@ class Director(object):
     def __del__(self):
         self.close_sockets()
         self.stop_workers()
+

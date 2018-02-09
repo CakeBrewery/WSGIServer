@@ -1,4 +1,5 @@
-from wsgi import AppRunner
+from WSGIServer.wsgi import AppRunner
+
 
 class BaseWorker(object):
     def __init__(self, cfg=None):
@@ -25,10 +26,12 @@ class BaseWorker(object):
 
         while True:
             try:
+                print('SELECTING')
                 socket_fds = select.select(self.sockets, [], [], 1)
                 
                 for _socket in scoket_fds:
                     client, addr = _socket.accept()
+                    print('HANDLING')
                     self.handle(_socket, client, addr)
 
             except EnvironmentError as e:
