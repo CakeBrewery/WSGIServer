@@ -1,0 +1,2 @@
+class CannotKeepUp(Exception):
+    pass

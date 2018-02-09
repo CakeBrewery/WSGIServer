@@ -8,8 +8,12 @@ from six import StringIO
 import socket
 import sys
 
+from workers.base import BaseWorker
+from director import Director 
+
 import handlers
 
+from exceptions import (CannotKeepUp)
 
 logging.getLogger().setLevel(logging.getLevelName('INFO'))
 
@@ -32,6 +36,7 @@ def _configured_socket():
 class WSGIServer(object):
 
     def __init__(self, server_address, application):
+        self.director = Director()
         self.socket = _configured_socket()
 
         self.socket.bind(server_address)
@@ -49,6 +54,7 @@ class WSGIServer(object):
 
         self.application = application
 
+    """
     def _fork_and_handle(self):
         # Simple half-assed implementation for supporting
         # multiple connections at the same time.
@@ -62,23 +68,26 @@ class WSGIServer(object):
             os._exit(0)
         else:
             self.client_connection.close()
+    """
     
     def _next_connection(self):
         self.client_connection, client_address = self.socket.accept()
         return client_address
 
+    def prefork(self):
+        num_workers = 1 
+
+        try:
+            while len(self.direcotor.workers()) < num_workers:
+                logging.info('Initializing worker. Total Workers: {}'.format(self.director.workers())
+                director.hire(DefaultWorker):
+        except CannotKeepUp as e:
+            # While a bad thing, we can keep going. 
+            logging.warning(e)
+
     def start(self):
         while True:
-            try:
-                if self._next_connection():
-                    self._fork_and_handle()
-            except IOError as e:
-                code, msg = e.args
-
-                if code == errno.EINTR:
-                    continue
-                else:
-                    raise
+            self.prefork()
 
     def handle_request(self):
         print('Handling request')
