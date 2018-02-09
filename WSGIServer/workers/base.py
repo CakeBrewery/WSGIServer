@@ -17,7 +17,7 @@ class BaseWorker(object):
 
         while True:
             try:
-                socket_fds = select.select(self.sockets, []. [], 1)
+                socket_fds = select.select(self.sockets, [], [], 1)
                 
                 for _socket in scoket_fds:
                     client, addr = _socket.accept()
