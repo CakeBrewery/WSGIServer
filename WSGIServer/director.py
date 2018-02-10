@@ -62,7 +62,6 @@ class Director(object):
             worker = worker_cls(self.cfg)
             if worker:
                 self._workers[pid] = worker
-                raise NotImplementedError(self.sockets)
                 worker.start(self.sockets)
                 return pid
 
@@ -82,7 +81,7 @@ class Director(object):
     def workers(self):
         return self._workers.values()        
 
-    def __del__(self):
-        self.close_sockets()
-        self.stop_workers()
+    #def __del__(self):
+    #    self.close_sockets()
+    #    self.stop_workers()
 

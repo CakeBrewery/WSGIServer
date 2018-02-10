@@ -1,4 +1,5 @@
 from WSGIServer.wsgi import AppRunner
+import select
 
 
 class BaseWorker(object):
@@ -6,7 +7,7 @@ class BaseWorker(object):
         self.cfg = cfg or {}
         self.sockets = []
 
-    def handle(sock, client, addr):
+    def handle(self, sock, client, addr):
         runner = AppRunner(self.cfg['app'], client)
         runner.handle_request()
 
@@ -17,6 +18,7 @@ class BaseWorker(object):
             self.sockets = [] 
 
     def start(self, sockets):
+        print('Starting worker')
         if self.sockets:
             clear_sockets(delete=True)
         self.sockets = sockets if isinstance(sockets, list) else [socket]
@@ -27,9 +29,9 @@ class BaseWorker(object):
         while True:
             try:
                 print('SELECTING')
-                socket_fds = select.select(self.sockets, [], [], 1)
+                socket_fds, _, _ = select.select(self.sockets, [], [], 1)
                 
-                for _socket in scoket_fds:
+                for _socket in socket_fds:
                     client, addr = _socket.accept()
                     print('HANDLING')
                     self.handle(_socket, client, addr)
@@ -41,6 +43,6 @@ class BaseWorker(object):
     def stop(self):
         self.clear_sockets()
 
-    def __del__(self):
-        self.stop()
+    #def __del__(self):
+    #    self.stop()
 

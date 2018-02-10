@@ -1,6 +1,9 @@
 from collections import OrderedDict
 import datetime
+import logging
+import sys
 
+from six import StringIO
 
 class Request(object):
     def __init__(self, request_data):
@@ -12,19 +15,25 @@ class Request(object):
        return request_data.splitlines()[0].rstrip(b'\r\n').split() 
 
 
+def httpdate(dt):
+    """String representation in RFC 1123"""
+    return dt.strftime("%s, %d %b %Y %H:%M:%S GMT")
+
+
 class Response(object):
     def __init__(self, headers=None):
         self.ready = False
         self.headers = OrderedDict(headers or {}) 
 
     def start_response(self, status, response_headers, exc_info=None):
+        print('\n\n START RESPONSE')
         # This is a WSGI-defined callback (Check PEP333 for details)
         server_headers = [('Date', httpdate(datetime.datetime.now())), ('Server', 'WSGIServer 0.2')]
         self.status = status
-        self.headers = self.headers.update(response_headers)
+        self.headers.update(response_headers)
         self.ready = True
 
-    def serialize(body):
+    def serialize(self, status, body):
         if not self.ready:
             raise ValueError('Not ready. self.start_response() Must be called by a WSGI-compatible framework.')
 
@@ -33,7 +42,7 @@ class Response(object):
         for header in self.headers:
             response += '{}: {}\r\n'.format(*header)
         response += '\r\n'
-        response += ''.join(body)
+        response += '\n'.join(body)
 
         return response
 
@@ -54,15 +63,25 @@ class AppRunner(object):
         logging.info('\n'.join(self.request_data.splitlines()))
 
         req  = Request(self.request_data)
-        self.environ = self.make_wsgi_environ(req.method, req.path, req.request_version)
 
+        # Response Step 1: Initialize response builder object
         response = Response()
 
         logging.info('### Response ###\n')
-        logging.info('\n'.join(response.splitlines()))
+        logging.info('\n'.join(self.request_data))
 
+        # Response Step 2: Pass on response.start_response to application
+        environ = self.make_wsgi_environ(req.method, req.path, req.request_version)
         result = self.application(environ, response.start_response)
-        self.client_connection.sendall(response.serialize(result))
+
+        # Last step: Send response
+        try:
+            for data in result:
+                if data:
+                    self.connection.sendall(response.serialize(response.status, result))
+        finally:
+            if hasattr(result, 'close'):
+                result.close()
 
     def make_wsgi_environ(self, method, path, version):
         # These variables are listed on pep-0333
