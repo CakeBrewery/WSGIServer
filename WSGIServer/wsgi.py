@@ -26,7 +26,6 @@ class Response(object):
         self.headers = OrderedDict(headers or {}) 
 
     def start_response(self, status, response_headers, exc_info=None):
-        print('\n\n START RESPONSE')
         # This is a WSGI-defined callback (Check PEP333 for details)
         server_headers = [('Date', httpdate(datetime.datetime.now())), ('Server', 'WSGIServer 0.2')]
         self.status = status
@@ -59,20 +58,20 @@ class AppRunner(object):
     def handle_request(self):
         self.request_data = self.connection.recv(1024)
     
-        logging.info('### REQUEST ###"\n')
-        logging.info('\n'.join(self.request_data.splitlines()))
+        logging.info('### REQUEST ###"')
+        logging.info('\n\t{}'.format('\n\t'.join(self.request_data.splitlines())))
 
         req  = Request(self.request_data)
 
         # Response Step 1: Initialize response builder object
         response = Response()
 
-        logging.info('### Response ###\n')
-        logging.info('\n'.join(self.request_data))
-
         # Response Step 2: Pass on response.start_response to application
         environ = self.make_wsgi_environ(req.method, req.path, req.request_version)
         result = self.application(environ, response.start_response)
+
+        logging.info('### Response ###')
+        logging.info('\n\t{}'.format('\n\t'.join(result)))
 
         # Last step: Send response
         try:

@@ -1,5 +1,7 @@
-from WSGIServer.wsgi import AppRunner
+import logging
 import select
+
+from WSGIServer.wsgi import AppRunner
 
 
 class BaseWorker(object):
@@ -18,7 +20,7 @@ class BaseWorker(object):
             self.sockets = [] 
 
     def start(self, sockets):
-        print('Starting worker')
+        logging.info('Starting worker')
         if self.sockets:
             clear_sockets(delete=True)
         self.sockets = sockets if isinstance(sockets, list) else [socket]
@@ -28,12 +30,12 @@ class BaseWorker(object):
 
         while True:
             try:
-                print('SELECTING')
-                socket_fds, _, _ = select.select(self.sockets, [], [], 1)
+                logging.info('SELECTING')
+                socket_fds, _, _ = select.select(self.sockets, [], [])
                 
                 for _socket in socket_fds:
                     client, addr = _socket.accept()
-                    print('HANDLING')
+                    logging.info('HANDLING')
                     self.handle(_socket, client, addr)
 
             except EnvironmentError as e:

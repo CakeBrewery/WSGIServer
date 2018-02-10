@@ -1,9 +1,13 @@
 import time
 import unittest
+import logging
 
 from WSGIServer import director
 from WSGIServer import workers
 from WSGIServer import testapp
+
+
+logging.getLogger().setLevel(logging.getLevelName('INFO'))
 
 
 class TestDirector(unittest.TestCase):
