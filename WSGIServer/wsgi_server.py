@@ -13,7 +13,7 @@ from director import Director
 
 import handlers
 
-from lexceptions import CannotKeepUp
+from exceptions import CannotKeepUp
 
 
 logging.getLogger().setLevel(logging.getLevelName('INFO'))
