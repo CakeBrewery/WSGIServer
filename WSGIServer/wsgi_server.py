@@ -24,22 +24,14 @@ DEFAULT_PORT = 8881
 
 DEFAULT_CFG = {}
 
-
-def httpdate(dt):
-    """String representation in RFC 1123 """
-    return dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
-
-
-def _configured_socket():
-    _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    _socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    return _socket
-
-   
+ 
 class WSGIServer(object):
 
     def __init__(self, server_address, application):
-        self.cfg = DEFAULT_CFG.update({'SERVER_ADDRESS': server_address})
+        self.cfg = DEFAULT_CFG.update({
+            'SERVER_ADDRESS': server_address,
+            'app': application
+        })
         self.director = Director(self.cfg)
         self.application = application
 
