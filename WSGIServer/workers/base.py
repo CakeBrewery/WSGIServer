@@ -1,7 +1,9 @@
 import logging
+import os
 import select
 
 from WSGIServer.wsgi import AppRunner
+from WSGIServer import util
 
 
 class BaseWorker(object):
@@ -9,7 +11,7 @@ class BaseWorker(object):
         self.cfg = cfg or {}
         self.sockets = []
 
-    def handle(self, sock, client, addr):
+    def handle(self, client, addr):
         runner = AppRunner(self.cfg['app'], client)
         runner.handle_request()
 
@@ -19,8 +21,32 @@ class BaseWorker(object):
         if delete:
             self.sockets = [] 
 
+    @property
+    def __worker_logger(self):
+        # (Just an excuse to use currying)
+        if hasattr(self, '__wl'):
+            return self.__wl
+
+        class WorkerLogger(object):
+            pass
+        self.__wl = WorkerLogger()
+        def fn(method):
+            def fn2(*args, **kwargs):
+                rest_args = args[1:] if len(args) > 1 else []
+                new_args = ['Worker {}: {}'.format(os.getpid(), args[0])] + rest_args
+                return getattr(logging, method)(*new_args, **kwargs)
+            return fn2
+
+        for method in ['debug', 'info', 'warning', 'error', 'critical']:
+            setattr(self.__wl, method, fn(method)) 
+        return self.__wl
+
+    @property
+    def logging(self):
+        return self.__worker_logger
+
     def start(self, sockets):
-        logging.info('Starting worker')
+        self.logging.info('Starting worker')
         if self.sockets:
             clear_sockets(delete=True)
         self.sockets = sockets if isinstance(sockets, list) else [socket]
@@ -30,13 +56,23 @@ class BaseWorker(object):
 
         while True:
             try:
+                if len(sockets) == 1:
+                    self.logging.info('Waiting accept...')
+
+                    client, addr = self.sockets[0].accept() 
+                    util.close_on_exec(client)  # Let's make sure these FDs don't leak.
+
+                    self.logging.info('HANDLING ONE')
+                    self.handle(client, addr)
+                    continue
+
                 logging.info('SELECTING')
                 socket_fds, _, _ = select.select(self.sockets, [], [])
                 
                 for _socket in socket_fds:
                     client, addr = _socket.accept()
-                    logging.info('HANDLING')
-                    self.handle(_socket, client, addr)
+                    self.logging.info('HANDLING')
+                    self.handle(client, addr)
 
             except EnvironmentError as e:
                 if errno not in (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK):

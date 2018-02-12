@@ -12,7 +12,7 @@ class Request(object):
 
     @classmethod 
     def parse(cls, request_data):
-       return request_data.splitlines()[0].rstrip(b'\r\n').split() 
+        return request_data.splitlines()[0].rstrip(b'\r\n').split() 
 
 
 def httpdate(dt):
