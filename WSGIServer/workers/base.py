@@ -46,6 +46,10 @@ class BaseWorker(object):
         return self.__worker_logger
 
     def start(self, sockets):
+        for _socket in sockets:
+            # Prevent leaking FDs
+            util.close_on_exec(_socket)
+
         self.logging.info('Starting worker')
         if self.sockets:
             clear_sockets(delete=True)
