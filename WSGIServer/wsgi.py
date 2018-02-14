@@ -5,6 +5,7 @@ import sys
 
 from six import StringIO
 
+
 class Request(object):
     def __init__(self, request_data):
         self.parse(request_data)
@@ -80,7 +81,9 @@ class AppRunner(object):
                     self.connection.sendall(response.serialize(response.status, result))
         finally:
             if hasattr(result, 'close'):
+                print('closing result')
                 result.close()
+            self.connection.close()
 
     def make_wsgi_environ(self, method, path, version):
         # These variables are listed on pep-0333
