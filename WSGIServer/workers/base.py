@@ -70,17 +70,20 @@ class BaseWorker(object):
                     self.handle(client, addr)
                     continue
 
-                logging.info('SELECTING')
+                self.logging.info('SELECTING')
                 socket_fds, _, _ = select.select(self.sockets, [], [])
                 
                 for _socket in socket_fds:
                     client, addr = _socket.accept()
+                    util.close_on_exec(client)  # Let's make sure these FDs don't leak.
+
                     self.logging.info('HANDLING')
                     self.handle(client, addr)
 
             except EnvironmentError as e:
                 if errno not in (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK):
                     raise
+                logging.warning(e)
      
     def stop(self):
         self.clear_sockets()
