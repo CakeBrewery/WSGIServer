@@ -7,9 +7,11 @@ from WSGIServer import util
 
 
 class BaseWorker(object):
-    def __init__(self, cfg=None):
+    def __init__(self, cfg=None, parent_pid=None):
         self.cfg = cfg or {}
         self.sockets = []
+
+        self.parent_pid = parent_pid
 
     def handle(self, client, addr):
         runner = AppRunner(self.cfg['app'], client)
@@ -20,6 +22,16 @@ class BaseWorker(object):
             _socket.close()
         if delete:
             self.sockets = [] 
+
+    def is_parent_alive(self):
+        # Yet another thing borrowed from Gunicorn
+        # If the parent has changed, fire this worker. A possibly 
+        # updated director would then realize we are down workers 
+        # and hire more. This will allow hot-reloading in the future. 
+        if self.parent_pid != os.getppid():
+            self.logging.info('Parent changed, shutting down: %s', self)
+            return False
+        return True
 
     @property
     def __worker_logger(self):
@@ -84,6 +96,9 @@ class BaseWorker(object):
                 if errno not in (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK):
                     raise
                 logging.warning(e)
+
+            if not self.is_parent_alive():
+                return
      
     def stop(self):
         self.clear_sockets()

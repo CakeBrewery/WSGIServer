@@ -56,10 +56,15 @@ class Director(object):
         """
         Pass in a worker_cls that implementes BaseWorker
         """
+        # Get parent PID before forking.
+        # The parent PID can be passed to the workers and is 
+        # useful for checking if the parent is still running.
+        parent_pid = os.getpid()
+
         pid = os.fork()
 
         if pid != 0:
-            worker = worker_cls(self.cfg)
+            worker = worker_cls(self.cfg, parent_pid=parent_pid)
             if worker:
                 self._workers[pid] = worker
                 worker.start(self.sockets)
