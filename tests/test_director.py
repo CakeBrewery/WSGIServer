@@ -34,7 +34,6 @@ class TestDirector(unittest.TestCase):
         pid1 = test_director.hire(workers.base.BaseWorker)
         pid2 = test_director.hire(workers.base.BaseWorker)
         self.assertEqual(len(find_all_child_processes()), 2)
-        raise NotImplementedError(test_director.workers)
 
         while True:
             print('Waiting')

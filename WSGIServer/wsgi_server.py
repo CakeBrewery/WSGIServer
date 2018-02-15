@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+FROM __future__ import unicode_literals
 
 import logging
 import os
@@ -49,6 +49,9 @@ class WSGIServer(object):
             while len(self.director.workers) < num_workers:
                 logging.info('Initializing worker. Total Workers: {}'.format(self.director.workers))
                 self.director.hire(BaseWorker)
+
+                if iter > 3:
+                    return
         except CannotKeepUp as e:
             # While a bad thing, we can keep going. 
             logging.warning(e)

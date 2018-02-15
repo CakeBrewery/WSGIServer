@@ -5,6 +5,8 @@ import select
 from WSGIServer.wsgi import AppRunner
 from WSGIServer import util
 
+import errno
+
 
 class BaseWorker(object):
     def __init__(self, cfg=None, parent_pid=None):
@@ -93,7 +95,7 @@ class BaseWorker(object):
                     self.handle(client, addr)
 
             except EnvironmentError as e:
-                if errno not in (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK):
+                if e not in (errno.EAGAIN, errno.ECONNABORTED, errno.EWOULDBLOCK):
                     raise
                 logging.warning(e)
 

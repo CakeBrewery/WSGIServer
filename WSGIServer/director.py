@@ -63,14 +63,16 @@ class Director(object):
         # useful for checking if the parent is still running.
         parent_pid = os.getpid()
 
-        pid = os.fork()
 
+        worker = worker_cls(self.cfg, parent_pid=parent_pid)
+
+        pid = os.fork()
         if pid != 0:
-            worker = worker_cls(self.cfg, parent_pid=parent_pid)
-            if worker:
                 self._workers[pid] = worker
-                worker.start(self.sockets)
                 return pid
+
+        worker.start(self.sockets)
+        sys.exit()
 
     def fire(self, worker_id, force=False):
         """
