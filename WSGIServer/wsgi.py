@@ -9,7 +9,7 @@ from six import StringIO
 class Request(object):
     def __init__(self, request_data):
         self.parse(request_data)
-        self.method, self.path, self.request_version = self.parse(request_data)
+        self.method, self.path, self.version = self.parse(request_data)
 
     @classmethod 
     def parse(cls, request_data):
@@ -62,13 +62,13 @@ class AppRunner(object):
         logging.info('### REQUEST ###"')
         logging.info('\n\t{}'.format('\n\t'.join(self.request_data.splitlines())))
 
-        req  = Request(self.request_data)
+        req = Request(self.request_data)
 
         # Response Step 1: Initialize response builder object
         response = Response()
 
         # Response Step 2: Pass on response.start_response to application
-        environ = self.make_wsgi_environ(req.method, req.path, req.request_version)
+        environ = self.wsgi_environ(req.method, req.path, req.version)
         result = self.application(environ, response.start_response)
 
         logging.info('### Response ###')
@@ -85,7 +85,7 @@ class AppRunner(object):
                 result.close()
             self.connection.close()
 
-    def make_wsgi_environ(self, method, path, version):
+    def wsgi_environ(self, method, path, version):
         # These variables are listed on pep-0333
         # Order doesn't matter with these, 
         # so stating them in a regular dict for convenience.

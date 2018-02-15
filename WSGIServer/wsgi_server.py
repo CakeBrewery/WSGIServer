@@ -1,11 +1,7 @@
 from __future__ import unicode_literals
 
-import datetime
-import errno
 import logging
 import os
-from six import StringIO 
-import socket
 import sys
 
 from workers.base import BaseWorker
@@ -13,25 +9,36 @@ from director import Director
 
 import handlers
 
-from exceptions import CannotKeepUp
+from WSGIServer.exceptions import CannotKeepUp
 
 
-logging.getLogger().setLevel(logging.getLevelName('INFO'))
+logging.getLogger().setLevel(logging.getLevelName('DEBUG'))
 
 
 DEFAULT_HOST = 'localhost'
-DEFAULT_PORT = 8881
+DEFAULT_PORT = 8888
 
 DEFAULT_CFG = {}
+
+__INITIALIZED_HANDLERS__ = False
 
  
 class WSGIServer(object):
 
+    # Configure handlers process-wide
+    global __INITIALIZED_HANDLERS__
+    if not __INITIALIZED_HANDLERS__:
+        handlers.initialize_handlers()
+        __INITIALIZED_HANDLERS__ = True
+
     def __init__(self, server_address, application):
-        self.cfg = DEFAULT_CFG.update({
+        self.cfg = DEFAULT_CFG
+
+        self.cfg.update({
             'SERVER_ADDRESS': server_address,
             'app': application
         })
+
         self.director = Director(self.cfg)
         self.application = application
 
@@ -62,11 +69,8 @@ if __name__ == '__main__':
     if not app_name or not hasattr(module, app_name):
         sys.exit('Could not find application object "{}" in module {}.'.format(app_name, module))
 
-    application = getattr(module, app_name)
+    app = getattr(module, app_name)
 
-    handlers.initialize_handlers()
-
-    server = WSGIServer(('localhost', 8881), application)
+    server = WSGIServer(('localhost', 8881), app)
     logging.info('WSGI Server: Serving from {}:{}\n'.format(DEFAULT_HOST, DEFAULT_PORT))
     server.start()
-

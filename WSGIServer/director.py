@@ -1,3 +1,4 @@
+import logging
 import os
 import signal
 import socket
@@ -39,6 +40,7 @@ class Director(object):
             raise ValueError('Configuration errors:\n{}'.format('\n'.join(cfg_errors)))
 
         while len(self.sockets) < self.cfg['SOCKET_COUNT']:
+            logging.info('Making new socket')
             _socket = _configured_socket()
             _socket.bind(self.cfg['SERVER_ADDRESS'])
             _socket.listen(1)
