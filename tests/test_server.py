@@ -11,6 +11,6 @@ DEFAULT_PORT = 8888
 
 class TestServer(unittest.TestCase):
     def test_server(self):
-        server = WSGIServer.WSGIServer(('localhost', 8881), testapp.AppClass)
+        server = WSGIServer.WSGIServer((DEFAULT_HOST, DEFAULT_PORT), testapp.AppClass)
         logging.info('WSGI Server: Serving from {}:{}\n'.format(DEFAULT_HOST, DEFAULT_PORT))
         server.start()

@@ -64,7 +64,7 @@ class BaseWorker(object):
             # Prevent leaking FDs
             util.close_on_exec(_socket)
 
-        self.logging.info('Starting worker')
+        self.logging.info('Starting')
         if self.sockets:
             clear_sockets(delete=True)
         self.sockets = sockets if isinstance(sockets, list) else [socket]

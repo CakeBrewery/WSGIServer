@@ -1,4 +1,4 @@
-FROM __future__ import unicode_literals
+from __future__ import unicode_literals
 
 import logging
 import os
@@ -43,15 +43,13 @@ class WSGIServer(object):
         self.application = application
 
     def prefork(self):
-        num_workers = 1 
+        num_workers = 2
 
         try:
             while len(self.director.workers) < num_workers:
-                logging.info('Initializing worker. Total Workers: {}'.format(self.director.workers))
                 self.director.hire(BaseWorker)
+                logging.info('Initializing worker. Total Workers: {}'.format(len(self.director.workers)))
 
-                if iter > 3:
-                    return
         except CannotKeepUp as e:
             # While a bad thing, we can keep going. 
             logging.warning(e)
@@ -62,6 +60,7 @@ class WSGIServer(object):
             os.wait()
 
 
+"""
 if __name__ == '__main__':
     module, app_name = sys.argv[1].split(':')
     if not module:
@@ -77,3 +76,4 @@ if __name__ == '__main__':
     server = WSGIServer(('localhost', 8881), app)
     logging.info('WSGI Server: Serving from {}:{}\n'.format(DEFAULT_HOST, DEFAULT_PORT))
     server.start()
+"""
