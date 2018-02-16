@@ -36,7 +36,7 @@ class TestDirector(unittest.TestCase):
         self.assertEqual(len(find_all_child_processes()), 2)
 
         while True:
-            print('Waiting')
+            logging.info('Waiting')
             time.sleep(60)
 
 

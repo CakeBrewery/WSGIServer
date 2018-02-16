@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 import socket
+import sys
 
 
 default_cfg = {
@@ -62,7 +63,6 @@ class Director(object):
         # The parent PID can be passed to the workers and is 
         # useful for checking if the parent is still running.
         parent_pid = os.getpid()
-
 
         worker = worker_cls(self.cfg, parent_pid=parent_pid)
 

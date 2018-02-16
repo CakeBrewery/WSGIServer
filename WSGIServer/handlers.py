@@ -31,7 +31,7 @@ _HANDLERS = {
 
 
 def get_handler(signal_name):
-    return _HANDLERS(signal_name)
+    return _HANDLERS.get(signal_name)
 
 
 def initialize_handlers():

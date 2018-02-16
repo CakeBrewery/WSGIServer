@@ -16,10 +16,10 @@ class BaseWorker(object):
         self.parent_pid = parent_pid
 
     def handle(self, client, addr):
-        runner = AppRunner(self.cfg['app'], client)
+        runner = AppRunner(self.cfg['app'], client, cfg=self.cfg)
         runner.handle_request()
 
-    def clear_sockets(delete=True):
+    def clear_sockets(self, delete=True):
         for _socket in self.sockets:
             _socket.close()
         if delete:
@@ -66,8 +66,8 @@ class BaseWorker(object):
 
         self.logging.info('Starting')
         if self.sockets:
-            clear_sockets(delete=True)
-        self.sockets = sockets if isinstance(sockets, list) else [socket]
+            self.clear_sockets(delete=True)
+        self.sockets = sockets if isinstance(sockets, list) else [sockets]
 
         if not self.sockets:
             raise ValueError('Sockets must be provided')

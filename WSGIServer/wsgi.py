@@ -24,12 +24,15 @@ def httpdate(dt):
 class Response(object):
     def __init__(self, headers=None):
         self.ready = False
-        self.headers = OrderedDict(headers or {}) 
+        self.headers = OrderedDict(headers or {})
+        self.status = None
 
     def start_response(self, status, response_headers, exc_info=None):
         # This is a WSGI-defined callback (Check PEP333 for details)
         server_headers = [('Date', httpdate(datetime.datetime.now())), ('Server', 'WSGIServer 0.2')]
+
         self.status = status
+        self.headers.update(server_headers)
         self.headers.update(response_headers)
         self.ready = True
 
@@ -70,18 +73,16 @@ class AppRunner(object):
         # Response Step 2: Pass on response.start_response to application
         environ = self.wsgi_environ(req.method, req.path, req.version)
         result = self.application(environ, response.start_response)
-
-        logging.info('### Response ###')
-        logging.info('\n\t{}'.format('\n\t'.join(result)))
+        # logging.info('### Response ###')
+        # logging.info('\n\t{}'.format('\n\t'.join(result)))
 
         # Last step: Send response
         try:
-            for data in result:
-                if data:
-                    self.connection.sendall(response.serialize(response.status, result))
+            # for data in result:
+            #    if data:
+            self.connection.sendall(response.serialize(response.status, [chunk for chunk in result]))
         finally:
             if hasattr(result, 'close'):
-                print('closing result')
                 result.close()
             self.connection.close()
 
@@ -96,11 +97,11 @@ class AppRunner(object):
             'PATH_INFO': path,
             'QUERY_STRING': '',  # TODO
             'CONTENT_TYPE': '',  # Maybe empty, implement something more specific (TODO)
-            'SERVER_NAME': self.cfg.get('Server Name'),
-            'SERVER_PORT': str(self.cfg.get('Server Port')),
+            'SERVER_NAME': self.cfg.get('SERVER_ADDRESS')[0],
+            'SERVER_PORT': str(self.cfg.get('SERVER_ADDRESS')[1]),
             'SERVER_PROTOCOL': 'HTTP/1.1',
             'HTTP_VARIABLES': '',
-            
+
             # WSGI-defined variables
             'wsgi.version': (1, 0),
             'wsgi.url_scheme': (1, 0),
