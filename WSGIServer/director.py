@@ -83,7 +83,7 @@ class Director(object):
         worker = self._workers.get(worker_id)
 
         if worker and worker.stop(force=force):
-            os.kill(pid, signal.SIGINT if force else signal.SIGTERM)
+            os.kill(worker_id, signal.SIGINT if force else signal.SIGTERM)
             del self._workers[worker_id]
 
     @property
