@@ -15,6 +15,10 @@ def _sigchld(signum, stack):
     # the entry remains in the process table even though the child is done.
     # aka a zombie process. To obtain the status, call "wait" on the process.
     # We must do this to avoid Zombie processes.
+    
+    # This triggers when SIGCHLD happens. Iterates over all done processes
+    # (WNOHANG so that only done processes show up and we don't wait for undone ones)
+    # Iterates over all done processes and "waits" them, which removes them from process table.
     while True:
         try:
             # WNOHANG makes this non-blocking
