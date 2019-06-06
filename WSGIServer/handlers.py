@@ -10,8 +10,11 @@ import errno
 
 
 def _sigchld(signum, stack):
-    # SIGCHLD indicates that a worker has stopped.
-    # We must do this to avoid Zombie processes
+    # SIGCHLD happens when a child process exits.
+    # In order for the parent to retrieve the exit status of a child, 
+    # the entry remains in the process table even though the child is done.
+    # aka a zombie process. To obtain the status, call "wait" on the process.
+    # We must do this to avoid Zombie processes.
     while True:
         try:
             # WNOHANG makes this non-blocking
@@ -35,6 +38,7 @@ def get_handler(signal_name):
 
 
 def initialize_handlers():
+    # Set callbacks that run when a specific signal triggers. 
     for handler, callback in _HANDLERS.items():
         if hasattr(signal, handler):
             signal.signal(getattr(signal, handler), callback)
